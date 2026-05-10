@@ -1,5 +1,3 @@
-import random
-
 import allure
 import requests
 
@@ -10,7 +8,7 @@ class TestPet:
     @allure.title("Попытка удалить несуществующего питомца")
     def test_delete_nonexistent_pet(self):
         with allure.step("Отправка запроса на удаление несуществующего питомца"):
-            response = requests.delete(url=f"{BASE_URL}/pet/{random.randrange(1000,10000)}")
+            response = requests.delete(url=f"{BASE_URL}/pet/9999")
         with allure.step("Проверка status_code"):
             assert response.status_code == 200, (f"Ожидаемый результат: status_code == 200, "
                                                  f"Фактический результат: status_code == {response.status_code} ")
@@ -22,7 +20,7 @@ class TestPet:
     def test_update_nonexistent_pet(self):
         with allure.step("Отправка запроса на обновление несуществующего питомца"):
             body = {
-                "id": random.randrange(1000,10000),
+                "id": 9999,
                 "name": "Non-existent Pet",
                 "status": "available"
             }
@@ -37,7 +35,7 @@ class TestPet:
     @allure.title("Попытка получить информацию о несуществующем питомце")
     def test_get_nonexistent_pet(self):
         with allure.step("Отправка запроса на получение информации о несуществующем питомце"):
-            response = requests.get(url=f"{BASE_URL}/pet/{random.randrange(1000,10000)}")
+            response = requests.get(url=f"{BASE_URL}/pet/9999")
             with allure.step("Проверка status_code"):
                 assert response.status_code == 404, (f"Ожидаемый результат: status_code == 404, "
                                                      f"Фактический результат: status_code == {response.status_code} ")
