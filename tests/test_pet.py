@@ -71,7 +71,7 @@ class TestPet:
                                                        f" Фактический результат: status == {response_json["status"]}")
 
     @allure.title("Добавление нового питомца c полными данными")
-    def test_create_new_pet(self):
+    def test_create_pet_with_full_data(self):
         with allure.step("Подготовка данных для создания питомца"):
             body = {
                 "id": 10,
