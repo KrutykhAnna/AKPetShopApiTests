@@ -152,7 +152,7 @@ class TestPet:
                                                                f"Фактический результат: status == {response_dict["status"]}")
 
     @allure.title("Удаление питомца по id")
-    def test_update_pet(self,
+    def test_delete_pet(self,
                         create_pet_fixture: dict):
         with allure.step("Получение id созданного питомца"):
             pet_id = create_pet_fixture["id"]
