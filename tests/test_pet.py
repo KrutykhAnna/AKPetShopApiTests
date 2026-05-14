@@ -1,5 +1,6 @@
 import allure
 import jsonschema
+import pytest
 import requests
 from schemas.pet_schema import PET_SCHEMA
 
@@ -105,3 +106,90 @@ class TestPet:
             assert response_json["status"] == body["status"], (f"Ожидаемый результат: status == {body["status"]},"
                                                                f" Фактический результат: status == {response_json["status"]}")
 
+    @allure.title("Получение информации о питомце по id")
+    def test_get_pet_by_id(self,
+                           create_pet_fixture: dict):
+        with allure.step("Получение id созданного питомца"):
+            pet_id = create_pet_fixture["id"]
+
+        with allure.step("Отправка запроса на получение информации о питомце по id"):
+            response = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
+            response_dict = response.json()
+            with allure.step("Проверка статуса ответа и данных питомца"):
+                assert response.status_code == 200, (f"Ожидаемый результат: status_code == 200, "
+                                                     f"Фактический результат: status_code == {response.status_code} ")
+                assert response_dict["id"] == pet_id, (f"Ожидаемый результат id == {pet_id}, "
+                                                       f"Фактический результат id == {response_dict["id"]}")
+                assert response_dict["name"] == create_pet_fixture["name"], (
+                    f"Ожидаемый результат name == {create_pet_fixture["name"]}, "
+                    f"Фактический результат name == {response_dict["name"]}")
+                assert response_dict["status"] == create_pet_fixture["status"], (
+                    f"Ожидаемый результат: status == {create_pet_fixture["status"]} ,"
+                    f" Фактический результат: status == {response_dict["status"]}")
+
+    @allure.title("Получение списка питомцев по статусу")
+    @pytest.mark.parametrize("status, expected_status_code",[
+         ("available",200),
+         ("invalid",400),
+         ("sold",200),
+         ("",400)])
+    def test_get_pets_by_status(self, status: str, expected_status_code: int):
+        with allure.step(f"Отправка запрос на получение питомцев по статусу {status}"):
+            response = requests.get(url=f"{BASE_URL}/pet/findByStatus", params={"status": status})
+            response_dict = response.json()
+        with allure.step("Проверка статуса ответа"):
+            assert response.status_code == expected_status_code, (f"Ожидаемый результат: status_code == {expected_status_code}, "
+                                                 f"Фактический результат: status_code == {response.status_code} ")
+        with allure.step("Проверка формата данных и корректности ответа"):
+            if response.status_code == 200:
+                assert isinstance(response_dict, list), (f"Ожидаемый результат: type == list, "
+                                                 f"Фактический результат: type == {type(response_dict)} ")
+                assert response_dict[0]["status"] == status
+            else:
+                assert response_dict["message"] == f"Input error: query parameter `status value `{status}` is not in the allowable values `[available, pending, sold]`"
+
+
+    @allure.title("Обновление информации о питомце")
+    def test_update_pet(self,
+                        create_pet_fixture: dict):
+        with allure.step("Получение id созданного питомца"):
+            pet_id = create_pet_fixture["id"]
+
+        with allure.step("Отправка запроса на обновление питомца"):
+            body = {
+                "id": pet_id,
+                "name": "Buddy Updated",
+                "status": "sold"
+            }
+            response = requests.put(url=f"{BASE_URL}/pet", json=body)
+            response_dict = response.json()
+
+        with allure.step("Проверка статуса ответа и обновленные данные питомца"):
+            assert response.status_code == 200, (f"Ожидаемый результат: status_code == 200, "
+                                                 f"Фактический результат: status_code == {response.status_code} ")
+            assert response_dict["id"]  == pet_id, (f"Ожидаемый результат: id == {pet_id}, "
+                                                     f"Фактический результат: id == {response_dict["id"]}")
+            assert response_dict["name"] == body["name"], (f"Ожидаемый результат: name == {body["name"]}, "
+                                                           f"Фактический результат: name == {response_dict["name"]}")
+            assert response_dict["status"] == body["status"], (f"Ожидаемый результат: status == {body["status"]} ,"
+                                                               f"Фактический результат: status == {response_dict["status"]}")
+
+    @allure.title("Удаление питомца по id")
+    def test_delete_pet(self,
+                        create_pet_fixture: dict):
+        with allure.step("Получение id созданного питомца"):
+            pet_id = create_pet_fixture["id"]
+
+        with allure.step("Отправка запроса на удаление питомца"):
+            response = requests.delete(url=f"{BASE_URL}/pet/{pet_id}")
+
+        with allure.step("Проверка статуса ответа"):
+            assert response.status_code == 200, (f"Ожидаемый результат: status_code == 200, "
+                                                 f"Фактический результат: status_code == {response.status_code} ")
+
+        with allure.step("Попытка получить данные удаленного питомца"):
+            response = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
+            assert response.status_code == 404, (f"Ожидаемый результат: status_code == 404, "
+                                                 f"Фактический результат: status_code == {response.status_code} ")
+            assert response.text == "Pet not found", (f"Ожидаемый результат: text == 'Pet not found' ,"
+                                                    f" Фактический результат: text == {response.text} ")
